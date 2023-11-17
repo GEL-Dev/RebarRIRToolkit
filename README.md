@@ -15,13 +15,13 @@ RebarRIRToolkit
 │　└ ○○.py
 │
 ├ my_package .. Modularized files
-│　├ geometry .. 
+│　├ geometry .. Geometry-related
 │　│　├ ○○.py
 │　│　└ ○○.py
-│　├ rebar .. 
+│　├ rebar .. Rebar-related
 │　│　├ ○○.py
 │　│　└ ○○.py
-│　├ revit .. 
+│　├ revit .. Revit-related
 │　│　├ ○○.py
 │　│　└ ○○.py
 │　├ utils .. 
