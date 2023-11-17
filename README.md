@@ -1,6 +1,36 @@
-RebarRIRToolkit/
+# RebarRIRToolkit
+
+This is a toolkit for placing rebar using RhinoInside.Revit.
+
+## Folder Organization
+The project folder structure is as follows.
+```
+RebarRIRToolkit
 │
-├── utils/
-│   ├── rhinoinside_utils.py
-│   ├── revit_utils.py
-│   └── grasshopper_utils.py
+├ README.md .. 
+│
+├ gh_scripts .. Code to use in GHPython.
+│　├ 
+～
+│　└ ○○.py
+│
+├ my_package .. Modularized files
+│　├ geometry .. 
+│　│　├ ○○.py
+│　│　└ ○○.py
+│　├ rebar .. 
+│　│　├ ○○.py
+│　│　└ ○○.py
+│　├ revit .. 
+│　│　├ ○○.py
+│　│　└ ○○.py
+│　├ utils .. 
+│　│　├ rhinoinside_utils.py : contains utility functions for using Rhino.Inside.
+│　│　├ revit_utils.py : contains utility functions related to working with Revit.
+│　│　└ grasshopper_utils.py : contains utility functions related to working with Grasshopper.
+│　│　└ utils.py : contains utility general functions.
+└ test .. GH file
+　　├ ○○.gh
+　　├ ○○.gh
+　　└ ○○.gh
+```
