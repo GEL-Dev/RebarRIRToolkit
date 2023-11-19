@@ -1,40 +1,15 @@
 # -*- coding: utf-8 -*-
-import rhinoinside_utils
-
-from Autodesk.Revit.DB import Document
 from Autodesk.Revit.DB.Structure import Rebar, RebarBarType, RebarShape, RebarHookType
-from Autodesk.Revit.DB import XYZ, ElementId
-'''
-def create_rebar(doc, rebar_type_id, rebar_shape, rebar_parameters):
-    """鉄筋を生成する関数
+from Autodesk.Revit.DB import XYZ, ElementId,FilteredElementCollector, BuiltInCategory,BuiltInParameter
 
-    Args:
-        doc (Document): Revitのドキュメント
-        rebar_type_id (ElementId): 鉄筋のタイプID
-        rebar_shape (RebarShape): 鉄筋の形状
-        rebar_parameters (dict): 鉄筋のパラメータ
+def get_rebars_in_doc(doc):
+    return FilteredElementCollector(doc).OfClass(Rebar).ToElements()
 
-    Returns:
-        Rebar: 生成されたRebarオブジェクト
-    """
-    # ここに鉄筋を生成するロジックを実装
-    # 例: new_rebar = Rebar.Create(...)
-    return new_rebar
+def get_rebar_in_host(doc,host):
+    return FilteredElementCollector(doc,host.Id).OfClass(Rebar).ToElements()
 
-def edit_rebar_shape(rebar, new_shape):
-    """鉄筋の形状を編集する関数
+def get_rebar_by_mark(doc,mark):
+    return FilteredElementCollector(doc).OfClass(Rebar).WhereElementIsNotElementType().Where(lambda r:r.get_Parameter(BuiltInParameter.ALL_MODEL_MARK).AsString() == mark).ToElements()
 
-    Args:
-        rebar (Rebar): 編集するRebarオブジェクト
-        new_shape (RebarShape): 新しい形状
-
-    Returns:
-        None
-    """
-    # ここに鉄筋の形状を編集するロジックを実装
-    pass
-
-'''
-
-def create_rebar(doc, rebar_type_id, rebar_shape, rebar_parameters):
-    pass
+def get_rebar_in_host_by_mark(doc,host,mark):
+    return FilteredElementCollector(doc,host.Id).OfClass(Rebar).WhereElementIsNotElementType().Where(lambda r:r.get_Parameter(BuiltInParameter.ALL_MODEL_MARK).AsString() == mark).ToElements()
