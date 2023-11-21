@@ -5,7 +5,8 @@
         b: length of line
         plane: The base plane
     Output:
-        line: The line"""
+        line: The line
+"""
 
 import Rhino.Geometry as rg
 
