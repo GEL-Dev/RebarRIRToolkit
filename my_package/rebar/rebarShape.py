@@ -118,6 +118,7 @@ class RebarShapeCurve:
             self.plane = rg.Plane.WorldXY
         if base_line is None:
             base_line = rg.Line(rg.Point3d(0,0,0),rg.Point3d(1000,0,0))
+            
 
         for line in base_line:
             orient = rg.Transform.PlaneToPlane(rg.Plane.WorldXY,self.plane)
