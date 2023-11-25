@@ -69,8 +69,31 @@ class RebarShapeCurve:
         toPt5 = rg.Point3d(a-c+e,b-d,0)
         base_line5 = rg.Line(toPt4,toPt5)
         return [base_line,base_line2,base_line3,base_line4,base_line5]
-
     
+    def _generate_s_line(self,a,b,c,d):
+        fromPt = rg.Point3d(0,0,0)
+        toPt = rg.Point3d(a,0,0)
+        base_line = rg.Line(fromPt,toPt)
+        toPt2 = rg.Point3d(a+b,d,0)
+        base_line2 = rg.Line(toPt,toPt2)
+        toPt3 = rg.Point3d(a+b+c,d,0)
+        base_line3 = rg.Line(toPt2,toPt3)
+        return [base_line,base_line2,base_line3]
+    
+    def _generate_uPlus_line(self,a,b,c,d,e,f,g):
+        fromPt = rg.Point3d(0,0,0)
+        toPt = rg.Point3d(a,0,0)
+        base_line = rg.Line(fromPt,toPt)
+        toPt2 = rg.Point3d(a+b,f,0)
+        base_line2 = rg.Line(toPt,toPt2)
+        toPt3 = rg.Point3d(a+b+c,f,0)
+        base_line3 = rg.Line(toPt2,toPt3)
+        toPt4 = rg.Point3d(a+b+c+d,f-g,0)
+        base_line4 = rg.Line(toPt3,toPt4)
+        toPt5 = rg.Point3d(a+b+c+d+e,f-g,0)
+        base_line5 = rg.Line(toPt4,toPt5)
+        return [base_line,base_line2,base_line3,base_line4,base_line5]
+
     def _create_rebarShapeCurve_in_rhino(self):
 
         if self.name=="rg01":
@@ -94,11 +117,11 @@ class RebarShapeCurve:
         elif self.name=="rg10":
             pass
         elif self.name=="rg11":
-            pass
+            base_line = self._generate_s_line(self.a,self.b,self.c,self.d)
         elif self.name=="rg12":
             pass
         elif self.name=="rg13":
-            pass
+            base_line = self._generate_uPlus_line(self.a,self.b,self.c,self.d,self.e,self.f,self.g)
         elif self.name=="rg14":
             pass
         elif self.name=="rg15":
