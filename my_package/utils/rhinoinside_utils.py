@@ -21,6 +21,12 @@ def get_active_doc():
 def get_active_ui_doc():
     return Revit.ActiveUIDocument
 
+def convert_rhino_to_revit_length(rhino_length):
+    return Convert.Geometry.GeometryEncoder.ToInternalLength(rhino_length)
+
+def convert_revit_to_rhino_length(revit_length):
+    return Convert.Geometry.GeometryDecoder.ToRhinoLength(revit_length)
+
 def convert_rhino_to_revit_geometry(rhino_geometry):
     geometry_type = type(rhino_geometry)
     print(geometry_type)

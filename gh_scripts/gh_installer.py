@@ -1,3 +1,9 @@
+"""Provides a scripting component.
+    Inputs:
+        _install: bool:
+    Output:
+        message: string: The a output variable"""
+
 __author__ = "ykish"
 __version__ = "2023.11.24"
 

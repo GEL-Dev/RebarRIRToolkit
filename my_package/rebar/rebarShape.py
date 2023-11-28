@@ -1,8 +1,9 @@
 import Rhino.Geometry as rg
 
 class RebarShapeCurve:
-    def __init__(self,name,plane=None,a=0,b=0,c=0,d=0,e=0,f=0,g=0,h=0,x=0,y=0,j=0):
-        self.name = name
+    def __init__(self,rh_name, rv_name,plane=None,a=0,b=0,c=0,d=0,e=0,f=0,g=0,h=0,x=0,y=0,j=0):
+        self.rh_name = rh_name
+        self.rv_name = rv_name
         self.plane = plane
         self.a = a
         self.b = b
@@ -96,43 +97,43 @@ class RebarShapeCurve:
 
     def _create_rebarShapeCurve_in_rhino(self):
 
-        if self.name=="rg01":
+        if self.rh_name=="rg01":
             base_line = self._generate_i_line(self.a)   
-        elif self.name=="rg02":
+        elif self.rh_name=="rg02":
             base_line = self._generate_l_line(self.b,self.a)
-        elif self.name=="rg03":
+        elif self.rh_name=="rg03":
             base_line = self._generate_u_line(self.a,self.b,self.a)
-        elif self.name=="rg04":
+        elif self.rh_name=="rg04":
             base_line = self._generate_l_line(self.a,self.b)
-        elif self.name=="rg05":
+        elif self.rh_name=="rg05":
             base_line = self._generate_u_line(self.b,self.a,self.c)
-        elif self.name=="rg06":
+        elif self.rh_name=="rg06":
             base_line = self._generate_u_line(self.a,self.b,self.c)
-        elif self.name=="rg07":
+        elif self.rh_name=="rg07":
             base_line = self._generate_circle_line(self.a)
-        elif self.name=="rg08":
+        elif self.rh_name=="rg08":
             base_line = self._generate_rect_line(self.d,self.a,self.b,self.c)
-        elif self.name=="rg09":
+        elif self.rh_name=="rg09":
             base_line = self._generate_c_line(self.d,self.c,self.a,self.b,self.d)
-        elif self.name=="rg10":
+        elif self.rh_name=="rg10":
             pass
-        elif self.name=="rg11":
+        elif self.rh_name=="rg11":
             base_line = self._generate_s_line(self.a,self.b,self.c,self.d)
-        elif self.name=="rg12":
+        elif self.rh_name=="rg12":
             pass
-        elif self.name=="rg13":
+        elif self.rh_name=="rg13":
             base_line = self._generate_uPlus_line(self.a,self.b,self.c,self.d,self.e,self.f,self.g)
-        elif self.name=="rg14":
+        elif self.rh_name=="rg14":
             pass
-        elif self.name=="rg15":
+        elif self.rh_name=="rg15":
             pass
-        elif self.name=="rg16":
+        elif self.rh_name=="rg16":
             pass
-        elif self.name=="rg17":
+        elif self.rh_name=="rg17":
             pass
-        elif self.name=="rg18":
+        elif self.rh_name=="rg18":
             pass
-        elif self.name=="rg19":
+        elif self.rh_name=="rg19":
             pass
         
         lines = []
