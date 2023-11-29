@@ -12,7 +12,7 @@ rgLineType = data[0]['RhinoBaseLineType']
 length_parameters = data[0]['LengthParameter']
 length_parameters = length_parameters.split(',')
 # すべての可能なパラメータをNoneで初期化
-params = {'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'x': None, 'y': None, 'j': None}
+
 
 for param in length_parameters:
     params[param] = locals()[param]

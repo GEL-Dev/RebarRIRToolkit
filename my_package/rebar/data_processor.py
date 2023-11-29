@@ -1,31 +1,34 @@
 # -*- coding: utf-8 -*-
 import csv
 import os
-import codecs
+
 
 def find_row_by_name(target_name, target_column = None ):
-    name_column='Name'
-    """CSVファイルから指定した名前の行を取得する"""
     current_dir = os.path.dirname(__file__)
-    # 2層上のディレクトリ
     two_levels_up = os.path.abspath(os.path.join(current_dir, '..', '..'))
-    # CSVファイルのパス
     csv_path = os.path.join(two_levels_up, 'data','rebarShape.csv')
-    # CSVファイルを開く
     data = []
-    with codecs.open(csv_path, 'r', 'utf-8') as file:
-        reader = csv.DictReader(file)
+    with open(csv_path, mode='r') as csv_file:
+        reader = csv.DictReader(csv_file)
 
-    
         for row in reader:
-            if row['Name'] == target_name:
-                if target_column is not None:
-                    data.append(row)
-                else:
-                    data.append(row)
+            # 'Name'を含むキーを見つける
+            for key in row.keys():
+                if 'Name' in key:
+                    name_key = key
+                    break
             else:
-                data
-    
+                # 'Name'を含むキーがない場合は次の行へ
+                continue
+
+            if row[name_key] == target_name:
+                if target_column:
+                    # 特定の列のみを追加
+                    data.append(row[target_column])
+                else:
+                    # 全ての列を追加
+                    data.append(row)
+
     return data
 
-
+print(find_row_by_name('00'))

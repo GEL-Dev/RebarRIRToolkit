@@ -5,12 +5,11 @@ clr.AddReference('System.Core')
 clr.AddReference('RevitAPI') 
 clr.AddReference('RevitAPIUI')
 from RhinoInside.Revit import Revit, Convert
-from Autodesk.Revit import DB
 from System.Collections.Generic import List, IList
 from System import Enum, Action, Func, Uri, Guid, DateTime
 from Autodesk.Revit.DB import XYZ, Line as RevitLine, CurveArray, CurveArrArray,NurbSpline,BoundingBoxXYZ, Arc as RevitArc,Curve as RevitCurve,CurveLoop,CylindricalHelix, Ellipse as RevitEllipse,HermiteSpline 
 from Rhino.Geometry import Arc, Circle,Point3d,Point3f, Vector3d,Vector3f,Line ,Polyline, PolyCurve, Curve, PolylineCurve, NurbsCurve,LineCurve,Ellipse,Arc,Circle,ArcCurve
-import RhinoInside.Revit.Convert.Geometry
+
 clr.ImportExtensions(RhinoInside.Revit.Convert.Geometry)
 
 
@@ -25,7 +24,7 @@ def convert_rhino_to_revit_length(rhino_length):
     return Convert.Geometry.GeometryEncoder.ToInternalLength(rhino_length)
 
 def convert_revit_to_rhino_length(revit_length):
-    return Convert.Geometry.GeometryDecoder.ToRhinoLength(revit_length)
+    return Convert.Geometry.GeometryDecoder.ToModelLength(revit_length)
 
 def convert_rhino_to_revit_geometry(rhino_geometry):
     geometry_type = type(rhino_geometry)
