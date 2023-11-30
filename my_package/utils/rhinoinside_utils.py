@@ -13,11 +13,7 @@ import RhinoInside.Revit.Convert.Geometry
 clr.ImportExtensions(RhinoInside.Revit.Convert.Geometry)
 
 
-def get_active_doc():
-    return Revit.ActiveDBDocument
 
-def get_active_ui_doc():
-    return Revit.ActiveUIDocument
 
 def convert_rhino_to_revit_length(rhino_length):
     return Convert.Geometry.GeometryEncoder.ToInternalLength(rhino_length)

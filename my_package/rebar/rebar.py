@@ -4,7 +4,8 @@ import clr
 from rebarShape import RebarShapeCurve
 from data_processor import find_row_by_name
 from utils.utils import update_params_from_dict_list, dictionary_from_csv
-from utils.rhinoinside_utils import convert_rhino_to_revit_geometry, get_active_doc, get_active_ui_doc, convert_rhino_to_revit_length, convert_revit_to_rhino_length
+from utils.revit_utils import get_active_doc, get_active_ui_doc
+from utils.rhinoinside_utils import convert_rhino_to_revit_geometry, convert_rhino_to_revit_length, convert_revit_to_rhino_length
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId
 from Autodesk.Revit.DB.Structure import Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation
 
@@ -60,7 +61,7 @@ def get_rebar_shape_by_name(name):
 
 def get_hook_type_by_angle(angle):
     doc = get_active_doc()
-    rebar_hook_type = [rebarHook for rebarHook in FilteredElementCollector(doc).OfClass(RebarHookType).ToElements() if abs(rebarHook.HookAngle -angle) < 0.001 ]
+    rebar_hook_type = [rebarHook for rebarHook in FilteredElementCollector(doc).OfClass(RebarHookType).ToElements() if abs(rebarHook.HookAngle -angle) < 0.01 ]
     if len(rebar_hook_type) > 0:
         return rebar_hook_type[0]
     return None
@@ -110,12 +111,7 @@ def scaleToBox_rebar(rebar, origin, xVec, yVec):
         accessor.ScaleToBox(rv_origin - rebar_diameter*rv_xVec.Normalize()*0.5, rv_xVec +  rebar_diameter*rv_xVec.Normalize()*0.5, rv_yVec)
     return rebar
 
-def set_layoutAsNumberWithSpacing(rebar, number, spacing):
-    doc = get_active_doc()
-    rv_spacing = convert_rhino_to_revit_length(spacing)
-    accessor = rebar.GetShapeDrivenAccessor()
-    accessor.SetLayoutAsNumberWithSpacing(number, rv_spacing)
-    return rebar
+
 
 def create_rebar_coupler_at_Start(rebar):
     doc = get_active_doc()
@@ -227,12 +223,21 @@ def create_rebars_from_csv(csv_path, planes,host, startHookOrientations, endHook
 
 def create_rebarShape_rhinoCurve_from_dict(dict, plane=None):
     shapeName = dict['shape']
-    if shapeName == '0':
-        shapeName = "00"
+    if len(shapeName) == 1:
+        shapeName = "0" + shapeName
+
     data= find_row_by_name(shapeName)
     rgName = data[0]['RhinoBaseLineType']
     params = create_rebarShapePrarams_from_dict(dict)
     return RebarShapeCurve(rgName,shapeName, plane,**params)
+
+def create_rebarShape_rhinoCurves_from_dict_list(dict_list, plane_list=None):
+    curves_list = []
+    for i, dict in enumerate(dict_list):
+        curves_list.append(create_rebarShape_rhinoCurve_from_dict(dict, plane_list[i]))
+    return curves_list
+
+
 
 def create_rebar_from_dict_CAS(dict,  plane, host):
     doc = get_active_doc()
@@ -279,11 +284,34 @@ def create_rebar_from_C(curves, plane, host):
     rebar = Rebar.CreateFromCurves(doc, rv_rebarStyle, rv_rebarBarStyle, rv_startHookType, rv_endHookType, host, rv_norm, rv_curves,rv_starthookOrientation,rv_endhookOrientation,useExistingShapeIfPossible,createNewShape)
     return rebar
 
-def set_rebar_spacing_from_dict(rebar, dict):
+def set_layoutAsNumberWithSpacing(rebar, number, spacing):
     doc = get_active_doc()
-    spacing = dict['spacing']
-    bar_counts = dict['number']
     rv_spacing = convert_rhino_to_revit_length(spacing)
     accessor = rebar.GetShapeDrivenAccessor()
-    accessor.SetLayoutAsNumberWithSpacing(bar_counts, rv_spacing)
+    accessor.SetLayoutAsNumberWithSpacing(number, rv_spacing, True, True, True)
     return rebar
+
+def set_rebar_spacing_from_dict(rebar, dict):
+    if 'spacing' not in dict or dict['spacing'] == None or float(dict['spacing']) <= 0:
+        return rebar
+    bar_counts = int(dict['number']) 
+    rebar = set_layoutAsNumberWithSpacing(rebar, bar_counts, float(dict['spacing']))
+    return rebar
+
+
+def create_rebars_from_dict_CAS(dict_list, plane_list, host):
+    doc = get_active_doc()
+    rebars = []
+    with Transaction(doc, 'create_bars') as t:
+        t.Start()
+        failureOptions = t.GetFailureHandlingOptions()
+        handler = MyPreProcessor()
+        for i, dict in enumerate(dict_list):
+            rebar = create_rebar_from_dict_CAS(dict,  plane_list[i], host)
+            rebar = set_rebar_spacing_from_dict(rebar, dict)
+            rebars.append(rebar.Id)
+        t.SetFailureHandlingOptions(failureOptions)
+        t.Commit()
+
+    return rebars
+
