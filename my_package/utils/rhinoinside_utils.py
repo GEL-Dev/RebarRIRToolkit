@@ -9,9 +9,8 @@ from System.Collections.Generic import List, IList
 from System import Enum, Action, Func, Uri, Guid, DateTime
 from Autodesk.Revit.DB import XYZ, Line as RevitLine, CurveArray, CurveArrArray,NurbSpline,BoundingBoxXYZ, Arc as RevitArc,Curve as RevitCurve,CurveLoop,CylindricalHelix, Ellipse as RevitEllipse,HermiteSpline 
 from Rhino.Geometry import Arc, Circle,Point3d,Point3f, Vector3d,Vector3f,Line ,Polyline, PolyCurve, Curve, PolylineCurve, NurbsCurve,LineCurve,Ellipse,Arc,Circle,ArcCurve
-
+import RhinoInside.Revit.Convert.Geometry
 clr.ImportExtensions(RhinoInside.Revit.Convert.Geometry)
-
 
 
 def get_active_doc():

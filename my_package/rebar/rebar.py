@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import clr
 from rebarShape import RebarShapeCurve
 from data_processor import find_row_by_name
 from utils.utils import update_params_from_dict_list, dictionary_from_csv
 from utils.rhinoinside_utils import convert_rhino_to_revit_geometry, get_active_doc, get_active_ui_doc, convert_rhino_to_revit_length, convert_revit_to_rhino_length
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId
 from Autodesk.Revit.DB.Structure import Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation
-import clr
+
 import math
 
 class MyPreProcessor(IFailuresPreprocessor):
@@ -225,7 +226,9 @@ def create_rebars_from_csv(csv_path, planes,host, startHookOrientations, endHook
     return create_rebars_from_curves_and_shape(host, curves_list, norms, shapes, startHookAngles, endHookAngles, startHookOrientations, endHookOrientations, spacings, diameters, comments, bar_counts)
 
 def create_rebarShape_rhinoCurve_from_dict(dict, plane=None):
-    shapeName = "00" if shapeName =='0' else dict['shape']
+    shapeName = dict['shape']
+    if shapeName == '0':
+        shapeName = "00"
     data= find_row_by_name(shapeName)
     rgName = data[0]['RhinoBaseLineType']
     params = create_rebarShapePrarams_from_dict(dict)
@@ -260,7 +263,7 @@ def create_rebar_from_dict_RS(dict,  plane, host):
     rebar = Rebar.CreateFromRebarShape(doc, rv_shape, rv_type, host, rv_origin, rv_xVec, rv_yVec)
     return rebar
 
-def create_rebar_from_dict_C(curves, plane, host):
+def create_rebar_from_C(curves, plane, host):
     doc = get_active_doc()
     rv_curves = [convert_rhino_to_revit_geometry(curve) for curve in curves]
     rv_norm = convert_rhino_to_revit_geometry(plane.Normal)
@@ -276,4 +279,11 @@ def create_rebar_from_dict_C(curves, plane, host):
     rebar = Rebar.CreateFromCurves(doc, rv_rebarStyle, rv_rebarBarStyle, rv_startHookType, rv_endHookType, host, rv_norm, rv_curves,rv_starthookOrientation,rv_endhookOrientation,useExistingShapeIfPossible,createNewShape)
     return rebar
 
-
+def set_rebar_spacing_from_dict(rebar, dict):
+    doc = get_active_doc()
+    spacing = dict['spacing']
+    bar_counts = dict['number']
+    rv_spacing = convert_rhino_to_revit_length(spacing)
+    accessor = rebar.GetShapeDrivenAccessor()
+    accessor.SetLayoutAsNumberWithSpacing(bar_counts, rv_spacing)
+    return rebar
