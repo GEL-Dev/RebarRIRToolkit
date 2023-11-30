@@ -8,6 +8,7 @@ from utils.revit_utils import get_active_doc, get_active_ui_doc
 from utils.rhinoinside_utils import convert_rhino_to_revit_geometry, convert_rhino_to_revit_length, convert_revit_to_rhino_length
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId
 from Autodesk.Revit.DB.Structure import Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation
+import ghpythonlib.treehelpers as th
 
 import math
 
@@ -45,8 +46,6 @@ def get_rebar_type_by_diameter(rh_diameter):
     doc = get_active_doc()
     rebar_types = FilteredElementCollector(doc).OfClass(RebarBarType).ToElements()
     for rebar_type in rebar_types:
-        print(rebar_type)
-        print(rebar_type.BarModelDiameter)
         rv_diameter = convert_rhino_to_revit_length(rh_diameter)
         if abs(rebar_type.BarModelDiameter - rv_diameter) < 0.00001:
             return rebar_type
@@ -59,33 +58,29 @@ def get_rebar_shape_by_name(name):
         return rebar_shapes[0]
     return None
 
-def get_hook_type_by_angle(angle):
+def get_rebar_style_by_name(name):
+    rebar_shape = get_rebar_shape_by_name(name)
+    if rebar_shape != None:
+        return rebar_shape.RebarStyle
+
+def get_hook_type_by_angle(angle, style):
     doc = get_active_doc()
     rebar_hook_type = [rebarHook for rebarHook in FilteredElementCollector(doc).OfClass(RebarHookType).ToElements() if abs(rebarHook.HookAngle -angle) < 0.01 ]
     if len(rebar_hook_type) > 0:
-        return rebar_hook_type[0]
+        for hook in rebar_hook_type:
+            if hook.Style == style:
+                return hook
     return None
 
 def get_hook_type_from_shapename(shapename):
     data = find_row_by_name(shapename)
-    start_hook_type =get_hook_type_by_angle(float(data[0]['Hook At Start'] )* math.pi/180) 
-    end_hook_type =  get_hook_type_by_angle(float(data[0]['Hook At End']) * math.pi/180) 
+    style = get_rebar_style_by_name(shapename)
+    start_hook_type =get_hook_type_by_angle(float(data[0]['Hook At Start'] )* math.pi/180, style) 
+    end_hook_type =  get_hook_type_by_angle(float(data[0]['Hook At End']) * math.pi/180, style) 
 
     return [start_hook_type, end_hook_type]
 
-def create_rebar_from_cureves_and_shape(host,curves, norm, diameter, shape,startHookAngle,endHookAngle, startHookOrientation,endHookOrientation):
-    doc = get_active_doc()
-    rv_shape = get_rebar_shape_by_name(shape)
-    rv_curves = [convert_rhino_to_revit_geometry(curve) for curve in curves]
-    rv_norm = convert_rhino_to_revit_geometry(norm)
-    rv_type = get_rebar_type_by_diameter(diameter)
-    rv_startHookType = get_hook_type_by_angle(startHookAngle)
-    rv_endHookType = get_hook_type_by_angle(endHookAngle)
-    rv_startHookOrientation = get_hook_orientation(startHookOrientation)
-    rv_endHookOrientation = get_hook_orientation(endHookOrientation)
 
-    rebar = Rebar.CreateFromCurvesAndShape(doc, rv_shape, rv_type, rv_startHookType, rv_endHookType, host, rv_norm, rv_curves, rv_startHookOrientation, rv_endHookOrientation)
-    return rebar
 
 def create_rebar_from_shape(host, diameter, shape,origin, xVec, yVec):
     doc = get_active_doc()
@@ -234,8 +229,8 @@ def create_rebarShape_rhinoCurve_from_dict(dict, plane=None):
 def create_rebarShape_rhinoCurves_from_dict_list(dict_list, plane_list=None):
     curves_list = []
     for i, dict in enumerate(dict_list):
-        curves_list.append(create_rebarShape_rhinoCurve_from_dict(dict, plane_list[i]))
-    return curves_list
+        curves_list.append(create_rebarShape_rhinoCurve_from_dict(dict, plane_list[i]).curve)
+    return th.list_to_tree(curves_list)
 
 
 
