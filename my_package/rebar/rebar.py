@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import clr
+import System
+import ghpythonlib.treehelpers as th
 from rebarShape import RebarShapeCurve
 from data_processor import find_row_by_name
 from utils.utils import update_params_from_dict_list, dictionary_from_csv
 from utils.revit_utils import get_active_doc, get_active_ui_doc
 from utils.rhinoinside_utils import convert_rhino_to_revit_geometry, convert_rhino_to_revit_length, convert_revit_to_rhino_length
-from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId,Element,ElementType
 from Autodesk.Revit.DB.Structure import Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation
-import ghpythonlib.treehelpers as th
 
 import math
 
@@ -80,7 +81,14 @@ def get_hook_type_from_shapename(shapename):
 
     return [start_hook_type, end_hook_type]
 
-
+def get_default_coupler_type(doc, rebar, coupler_family_name):
+    
+    rebar_diameter = Element.Name.GetValue(doc.GetElement(rebar.GetTypeId())).replace('D',"")
+    coupler_types = [coupler_type for coupler_type in FilteredElementCollector(doc).OfClass(ElementType).OfCategory(BuiltInCategory.OST_Coupler).ToElements() if (coupler_family_name + rebar_diameter) in Element.Name.GetValue(coupler_type) ] 
+    if len(coupler_types) > 0:
+        return coupler_types[0]
+        
+    return None
 
 def create_rebar_from_shape(host, diameter, shape,origin, xVec, yVec):
     doc = get_active_doc()
@@ -108,54 +116,6 @@ def scaleToBox_rebar(rebar, origin, xVec, yVec):
 
 
 
-def create_rebar_coupler_at_Start(rebar):
-    doc = get_active_doc()
-    rebar_diameter = rebar.get_Parameter(BuiltInParameter.REBAR_BAR_DIAMETER).AsString()
-    cuplerTypes = [couplerType for couplerType in FilteredElementCollector(doc).OfClass(RebarCoupler).ToElements() if  rebar_diameter in couplerType.get_Parameter(BuiltInParameter.ALL_MODEL_TYPE_NAME).AsString() ]
-    if len(cuplerTypes) > 0:
-        defaulttypeId = cuplerTypes[0].Id
-        if defaulttypeId != ElementId.InvalidElementId:
-            rebarData1 = RebarReinforcementData.Create(rebar.Id, 0)
-            error = clr.Reference[RebarCouplerError]()
-            return RebarCoupler.Create(doc, defaulttypeId, rebarData1, None, error)
-    return None
-
-def create_rebars_from_curves_and_shape(host, curves_list, norms, shapes, startHookAngles, endHookAngles, startHookOrientations, endHookOrientations, spacings, diameters, comments, bar_counts):
-    doc = get_active_doc()
-    rebars = []
-    with Transaction(doc, 'create_bars') as t:
-        t.Start()
-        failureOptions = t.GetFailureHandlingOptions()
-        handler = MyPreProcessor()
-        t.SetFailureHandlingOptions(failureOptions)
-        
-        for i, curve in enumerate(curves_list):
-            rebar = create_rebar_from_cureves_and_shape(host,curves_list[i], norms[i], diameters[i], shapes[i],startHookAngles[i],endHookAngles[i], startHookOrientations[i],endHookOrientations[i])
-            if(spacings[i] == None and spacings[i] >0):
-                rebar = set_layoutAsNumberWithSpacing(rebar, bar_counts[i], spacings[i])
-            rebars.append(rebar)
-
-
-        t.Commit()
-    return rebars
-
-
-def create_rebars_from_curves(curves, norms, types, shapes, pitches, a, b, c, d, e, f, g, comments, bar_numbers):
-    rebars = []
-    with Transaction('create_bars') as t:
-        doc = get_active_doc()
-        t.Start()
-        failureOptions = t.GetFailureHandlingOptions()
-        handler = MyPreProcessor()
-        t.SetFailureHandlingOptions(failureOptions)
-
-        for i, curve in enumerate(curves):
-            rebar = Rebar.CreateFromCurvesAndShape(doc, shapes[i], types[i], None, None, None, norms[i], curve, RebarHookOrientation.Right, RebarHookOrientation.Right)
-            # その他のRebar設定...
-            rebars.append(rebar.Id)
-
-        t.Commit()
-    return rebars
 
 
 def get_rebars_in_doc(doc):
@@ -169,6 +129,7 @@ def get_rebar_by_mark(doc,mark):
 
 def get_rebar_in_host_by_mark(doc,host,mark):
     return FilteredElementCollector(doc,host.Id).OfClass(Rebar).WhereElementIsNotElementType().Where(lambda r:r.get_Parameter(BuiltInParameter.ALL_MODEL_MARK).AsString() == mark).ToElements()
+
 
 
 def create_rebarShapeParams_from_csv(csv_path):
@@ -201,21 +162,6 @@ def create_rebarShapeCurve_from_csv(csv_path, planes=None):
 def create_rebarShapeCurve_from_params(name,params, plane=None):
     return RebarShapeCurve(name, plane,**params)
 
-def create_rebars_from_csv(csv_path, planes,host, startHookOrientations, endHookOrientations,  comments):
-    curves_list = create_rebarShapeCurve_from_csv(csv_path, planes )
-    norms = [plane.Normal for plane in planes]
-    dict_list = dictionary_from_csv(csv_path)
-    shapes = [dict['shape'] for dict in dict_list]
-    spacings = [dict['spacing'] for dict in dict_list]
-    diameters = [dict['diameter'] for dict in dict_list]
-    bar_counts = [dict['number'] for dict in dict_list]
-    startHookAngles = [find_row_by_name(dict['shape'])['Hook At Start'] * math.pi/180 for dict in dict_list]
-    endHookAngles = [find_row_by_name(dict['shape'])['Hook At End'] * math.pi/180 for dict in dict_list]
-    startHookOrientations = [find_row_by_name(dict['shape'])['HookOrientation0']  for dict in dict_list]
-    endHookOrientations = [find_row_by_name(dict['shape'])['HookOrientation1'] * math.pi/180 for dict in dict_list]
-    
-    return create_rebars_from_curves_and_shape(host, curves_list, norms, shapes, startHookAngles, endHookAngles, startHookOrientations, endHookOrientations, spacings, diameters, comments, bar_counts)
-
 def create_rebarShape_rhinoCurve_from_dict(dict, plane=None):
     shapeName = dict['shape']
     if len(shapeName) == 1:
@@ -232,10 +178,65 @@ def create_rebarShape_rhinoCurves_from_dict_list(dict_list, plane_list=None):
         curves_list.append(create_rebarShape_rhinoCurve_from_dict(dict, plane_list[i]).curve)
     return th.list_to_tree(curves_list)
 
+def create_rebar_coupler_data(doc, rebar, index, coupler_family_name):
+    coupler_type = get_default_coupler_type(doc, rebar,coupler_family_name)
+    if coupler_type != None:
+        defaulttypeId = coupler_type.Id
+        print(defaulttypeId)
+        if defaulttypeId != ElementId.InvalidElementId:
+            rebarData_start =None
+            rebarData_end =None
+            if index == 0:
+                rebarData_start = RebarReinforcementData.Create(rebar.Id, index)
+                print(rebarData_start)
+            elif index == 1:
+                rebarData_end = RebarReinforcementData.Create(rebar.Id, index)
+                print(rebarData_end)
+            error = clr.Reference[RebarCouplerError]()
+
+            return defaulttypeId, rebarData_start, rebarData_end, error
+    return None
 
 
-def create_rebar_from_dict_CAS(dict,  plane, host):
-    doc = get_active_doc()
+def create_rebar_coupler_at_index(doc,rebar, index,coupler_family_name):
+    data = create_rebar_coupler_data(doc,rebar, index,coupler_family_name)
+    if data == None:
+        return rebar
+    type_Id, rebarData_start, rebarData_end, error = data
+    return RebarCoupler.Create(doc, type_Id, rebarData_start, rebarData_end, error)
+
+def create_rebar_coupler_from_dict(doc, rebar, dict,coupler_family_name):
+    index = -1
+    if 'coupler_start' in dict:
+        if dict['coupler_start'] == 1 or dict['coupler_start'] == "1":
+            index = 0
+            
+    if 'coupler_end' in dict:
+        if dict['coupler_end'] == 1 or dict['coupler_end'] == "1":
+            index = 1
+    if index == -1:
+        return rebar
+    print(index)
+    return create_rebar_coupler_at_index(doc,rebar, index,coupler_family_name)
+    
+def create_rebars_from_curves(curves, norms, types, shapes, pitches, a, b, c, d, e, f, g, comments, bar_numbers):
+    rebars = []
+    with Transaction('create_bars') as t:
+        doc = get_active_doc()
+        t.Start()
+        failureOptions = t.GetFailureHandlingOptions()
+        handler = MyPreProcessor()
+        t.SetFailureHandlingOptions(failureOptions)
+
+        for i, curve in enumerate(curves):
+            rebar = Rebar.CreateFromCurvesAndShape(doc, shapes[i], types[i], None, None, None, norms[i], curve, RebarHookOrientation.Right, RebarHookOrientation.Right)
+            # その他のRebar設定...
+            rebars.append(rebar.Id)
+
+        t.Commit()
+    return rebars
+
+def create_rebar_from_dict_CAS(doc,dict,  plane, host):
 
     shape = create_rebarShape_rhinoCurve_from_dict(dict, plane)
     curves = shape.curve
@@ -280,7 +281,6 @@ def create_rebar_from_C(curves, plane, host):
     return rebar
 
 def set_layoutAsNumberWithSpacing(rebar, number, spacing):
-    doc = get_active_doc()
     rv_spacing = convert_rhino_to_revit_length(spacing)
     accessor = rebar.GetShapeDrivenAccessor()
     accessor.SetLayoutAsNumberWithSpacing(number, rv_spacing, True, True, True)
@@ -293,8 +293,18 @@ def set_rebar_spacing_from_dict(rebar, dict):
     rebar = set_layoutAsNumberWithSpacing(rebar, bar_counts, float(dict['spacing']))
     return rebar
 
+def set_comment(rebar, comment):
+    comment_param = rebar.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
+    comment_param.Set(comment)
+    return rebar
 
-def create_rebars_from_dict_CAS(dict_list, plane_list, host):
+def set_comment_from_dict(rebar, dict):
+    if 'name' not in dict or dict['name'] == None:
+        return rebar
+    rebar = set_comment(rebar, dict['name'])
+    return rebar
+
+def create_rebars_from_dict_CAS(dict_list, plane_list, host,coupler_family_name="CPLD"):
     doc = get_active_doc()
     rebars = []
     with Transaction(doc, 'create_bars') as t:
@@ -302,11 +312,15 @@ def create_rebars_from_dict_CAS(dict_list, plane_list, host):
         failureOptions = t.GetFailureHandlingOptions()
         handler = MyPreProcessor()
         for i, dict in enumerate(dict_list):
-            rebar = create_rebar_from_dict_CAS(dict,  plane_list[i], host)
+            rebar = create_rebar_from_dict_CAS(doc, dict,  plane_list[i], host)
             rebar = set_rebar_spacing_from_dict(rebar, dict)
+            rebar = create_rebar_coupler_from_dict(doc, rebar, dict,coupler_family_name)
+            rebar = set_comment_from_dict(rebar, dict)
             rebars.append(rebar.Id)
         t.SetFailureHandlingOptions(failureOptions)
         t.Commit()
 
     return rebars
 
+
+    
