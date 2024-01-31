@@ -1,42 +1,42 @@
 face = _rebar_dict["face"]
-x = _rebar_dict["x_axis"]
-y = _rebar_dict["y_axis"]
+main_axis = _rebar_dict["main_axis"]
+sub_axis = _rebar_dict["sub_axis"]
 
 for d in _face_dict:
     if face == int(d["i"]):
         print(d)
         origin = d["Pt"]
-        x_axis = d["x"]
+        main_axis = d["x"]
         y_axis = d["y"]
         z_axis = d["z"]
         
-        if x =='x':
-            x_axis_rs = x_axis
-        elif x =='y':
-            x_axis_rs = y_axis
-        elif x =='z':
-            x_axis_rs = z_axis
-        elif x =='x_n':
-            x_axis_rs =  x_axis*-1
-        elif x =='y_n':
-            x_axis_rs =  y_axis*-1
-        elif x =='z_n':
-            x_axis_rs =  z_axis*-1
+        if main_axis =='x':
+            main_axis_rs = main_axis
+        elif main_axis =='y':
+            main_axis_rs = y_axis
+        elif main_axis =='z':
+            main_axis_rs = z_axis
+        elif main_axis =='x_n':
+            main_axis_rs =  main_axis*-1
+        elif main_axis =='y_n':
+            main_axis_rs =  y_axis*-1
+        elif main_axis =='z_n':
+            main_axis_rs =  z_axis*-1
         else:
-            x_axis_rs = x_axis
-        if y =='x':
-            y_axis_rs = x_axis
-        elif y =='y':
-            y_axis_rs = y_axis
-        elif y =='z':    
-            y_axis_rs = z_axis 
-        elif y =='x_n':
-            y_axis_rs =  x_axis*-1
-        elif y =='y_n':
-            y_axis_rs =  y_axis*-1
-        elif y =='z_n':
-            y_axis_rs =  z_axis*-1        
+            main_axis_rs = main_axis
+        if sub_axis =='x':
+            sub_axis_rs = main_axis
+        elif sub_axis =='y':
+            sub_axis_rs = y_axis
+        elif sub_axis =='z':    
+            sub_axis_rs = z_axis 
+        elif sub_axis =='x_n':
+            sub_axis_rs =  main_axis*-1
+        elif sub_axis =='y_n':
+            sub_axis_rs =  y_axis*-1
+        elif sub_axis =='z_n':
+            sub_axis_rs =  z_axis*-1        
         else:
-            y_axis_rs = y_axis
+            sub_axis_rs = y_axis
         
 

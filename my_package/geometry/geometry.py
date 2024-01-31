@@ -39,8 +39,8 @@ def create_plane_list_from_dict_list(rebar_dict_list, face_dict_list):
     for rebar_dict in rebar_dict_list:
 
         face = int(rebar_dict["face"])
-        x = rebar_dict["x_axis"]
-        y = rebar_dict["y_axis"]
+        main_axis = rebar_dict["main_axis"]
+        sub_axis = rebar_dict["sub_axis"]
         x_offset = float(rebar_dict["x_offset"])
         y_offset= float(rebar_dict["y_offset"])
         z_offset = float(rebar_dict["z_offset"])
@@ -54,39 +54,39 @@ def create_plane_list_from_dict_list(rebar_dict_list, face_dict_list):
                 y_axis = d["y"]
                 z_axis = d["z"]
 
-                place_origin =origin + x_axis * x_offset + y_axis * y_offset + z_axis * z_offset
+                place_origin =origin + main_axis * x_offset + y_axis * y_offset + z_axis * z_offset
                 
                 
-                if x =='x':
-                    x_axis_rs = x_axis
-                elif x =='y':
-                    x_axis_rs = y_axis
-                elif x =='z':
-                    x_axis_rs = z_axis
-                elif x =='x_n':
-                    x_axis_rs =  x_axis*-1
-                elif x =='y_n':
-                    x_axis_rs =  y_axis*-1
-                elif x =='z_n':
-                    x_axis_rs =  z_axis*-1
+                if main_axis =='x':
+                    main_axis_rs = main_axis
+                elif main_axis =='y':
+                    main_axis_rs = y_axis
+                elif main_axis =='z':
+                    main_axis_rs = z_axis
+                elif main_axis =='x_n':
+                    main_axis_rs =  main_axis*-1
+                elif main_axis =='y_n':
+                    main_axis_rs =  y_axis*-1
+                elif main_axis =='z_n':
+                    main_axis_rs =  z_axis*-1
                 else:
-                    x_axis_rs = x_axis
-                if y =='x':
-                    y_axis_rs = x_axis
-                elif y =='y':
-                    y_axis_rs = y_axis
-                elif y =='z':    
-                    y_axis_rs = z_axis 
-                elif y =='x_n':
-                    y_axis_rs =  x_axis*-1
-                elif y =='y_n':
-                    y_axis_rs =  y_axis*-1
-                elif y =='z_n':
-                    y_axis_rs =  z_axis*-1        
+                    main_axis_rs = main_axis
+                if sub_axis =='x':
+                    sub_axis_rs = main_axis
+                elif sub_axis =='y':
+                    sub_axis_rs = y_axis
+                elif sub_axis =='z':    
+                    sub_axis_rs = z_axis 
+                elif sub_axis =='x_n':
+                    sub_axis_rs =  main_axis*-1
+                elif sub_axis =='y_n':
+                    sub_axis_rs =  y_axis*-1
+                elif sub_axis =='z_n':
+                    sub_axis_rs =  z_axis*-1        
                 else:
-                    y_axis_rs = y_axis
+                    sub_axis_rs = y_axis
             
-                new_plane = rg.Plane(place_origin, x_axis_rs, y_axis_rs)
+                new_plane = rg.Plane(place_origin, main_axis_rs, sub_axis_rs)
                 result_planes .append(new_plane)
     return result_planes
 
@@ -107,11 +107,11 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
         number = int(rebar_dict['number'])-1
         spacing = float(rebar_dict['spacing'])
         z_axis_key = ["x","y","z"]
-        x_axis = str(rebar_dict["x_axis"].replace("_n",""))
-        y_axis = str(rebar_dict["y_axis"].replace("_n",""))
+        main_axis = str(rebar_dict["main_axis"].replace("_n",""))
+        sub_axis = str(rebar_dict["sub_axis"].replace("_n",""))
         print(y_axis)
-        z_axis_key.remove(x_axis)
-        z_axis_key.remove(y_axis)
+        z_axis_key.remove(main_axis)
+        z_axis_key.remove(sub_axis)
         print(z_axis_key[0])
         face_z_axis = face_dict[z_axis_key[0]]
         print(face_z_axis)
