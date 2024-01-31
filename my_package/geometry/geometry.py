@@ -54,7 +54,7 @@ def create_plane_list_from_dict_list(rebar_dict_list, face_dict_list):
                 y_axis = d["y"]
                 z_axis = d["z"]
 
-                place_origin =origin + main_axis * x_offset + y_axis * y_offset + z_axis * z_offset
+                place_origin =origin + x_axis * x_offset + y_axis * y_offset + z_axis * z_offset
                 
                 
                 if main_axis =='x':
