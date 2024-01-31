@@ -58,27 +58,27 @@ def create_plane_list_from_dict_list(rebar_dict_list, face_dict_list):
                 
                 
                 if main_axis =='x':
-                    main_axis_rs = main_axis
+                    main_axis_rs = x_axis
                 elif main_axis =='y':
                     main_axis_rs = y_axis
                 elif main_axis =='z':
                     main_axis_rs = z_axis
                 elif main_axis =='x_n':
-                    main_axis_rs =  main_axis*-1
+                    main_axis_rs =  x_axis*-1
                 elif main_axis =='y_n':
                     main_axis_rs =  y_axis*-1
                 elif main_axis =='z_n':
                     main_axis_rs =  z_axis*-1
                 else:
-                    main_axis_rs = main_axis
+                    main_axis_rs = x_axis
                 if sub_axis =='x':
-                    sub_axis_rs = main_axis
+                    sub_axis_rs = x_axis
                 elif sub_axis =='y':
                     sub_axis_rs = y_axis
                 elif sub_axis =='z':    
                     sub_axis_rs = z_axis 
                 elif sub_axis =='x_n':
-                    sub_axis_rs =  main_axis*-1
+                    sub_axis_rs =  x_axis*-1
                 elif sub_axis =='y_n':
                     sub_axis_rs =  y_axis*-1
                 elif sub_axis =='z_n':
@@ -109,7 +109,7 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
         z_axis_key = ["x","y","z"]
         main_axis = str(rebar_dict["main_axis"].replace("_n",""))
         sub_axis = str(rebar_dict["sub_axis"].replace("_n",""))
-        print(y_axis)
+        print(sub_axis)
         z_axis_key.remove(main_axis)
         z_axis_key.remove(sub_axis)
         print(z_axis_key[0])
