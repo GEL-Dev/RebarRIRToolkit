@@ -282,11 +282,15 @@ def create_rebar_from_C(curves, plane, host):
 
 def set_layoutAsNumberWithSpacing(rebar, number, spacing):
     rv_spacing = convert_rhino_to_revit_length(spacing)
+    if rebar == None:
+        return rebar
     accessor = rebar.GetShapeDrivenAccessor()
     accessor.SetLayoutAsNumberWithSpacing(number, rv_spacing, True, True, True)
     return rebar
 
 def set_rebar_spacing_from_dict(rebar, dict):
+    if rebar == None:
+        return rebar
     if 'spacing' not in dict or dict['spacing'] == None or float(dict['spacing']) <= 0:
         return rebar
     bar_counts = int(dict['number']) 
@@ -294,11 +298,15 @@ def set_rebar_spacing_from_dict(rebar, dict):
     return rebar
 
 def set_comment(rebar, comment):
+    if rebar == None:
+        return rebar
     comment_param = rebar.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
     comment_param.Set(comment)
     return rebar
 
 def set_comment_from_dict(rebar, dict):
+    if rebar == None:
+        return rebar
     if 'name' not in dict or dict['name'] == None:
         return rebar
     rebar = set_comment(rebar, dict['name'])

@@ -219,7 +219,7 @@ class RebarShapeCurve:
         elif self.rh_name=="rg07":
             base_line = self._generate_circle_line(self.radius,self.arc_angle)
         elif self.rh_name=="rg08":
-            base_line = self._generate_rect_line(self.d,self.a,self.b,self.c)
+            base_line = self._generate_rect_line(self.a,self.b,self.c,self.d)
         elif self.rh_name=="rg09":
             base_line = self._generate_c_line(self.d,self.c,self.a,self.b,self.d)
         elif self.rh_name=="rg10":
