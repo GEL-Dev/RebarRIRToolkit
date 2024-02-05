@@ -1,4 +1,4 @@
-name,face,z_offset,y_offset,x_offset,x_axis,y_axis,shape,diameter,number,spacing,a,b,coupler_start,coupler_end
+name,face,z_offset,y_offset,x_offset,main_axis,sub_axis,shape,diameter,number,spacing,a,b,coupler_start,coupler_end
 06_TS_TB,2,7300,50,200,y,z,6,19,5,200,600,800,1,
 06_TS_BB,2,8500,60,200,y,z_n,6,22,5,200,800,1000,1,
 06_TS_TB,2,7300,0,1200,y,z,0,25,3,250,700,0,0,

@@ -1,4 +1,4 @@
-name,face,z_offset,y_offset,x_offset,x_axis,y_axis,shape,diameter,number,spacing,a
+name,face,z_offset,y_offset,x_offset,main_axis,sub_axis,shape,diameter,number,spacing,a
 02_SF,1,500,100,300,y,x_n,2,16,5,150,1000
 02_EF,2,500,100,300,y,x_n,2,16,5,150,1000
 19_SF_dir0,1,2500,100,300,y,x_n,19,16,5,150,1000
