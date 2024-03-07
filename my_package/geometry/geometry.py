@@ -103,29 +103,27 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
         if face_dict is None:
             offset_planes.append(plane)
             continue 
-        
-        number = int(rebar_dict['number'])-1
-        spacing = float(rebar_dict['spacing'])
+
         z_axis_key = ["x","y","z"]
         main_axis = str(rebar_dict["main_axis"].replace("_n",""))
         sub_axis = str(rebar_dict["sub_axis"].replace("_n",""))
-        print(sub_axis)
         z_axis_key.remove(main_axis)
         z_axis_key.remove(sub_axis)
-        print(z_axis_key[0])
         face_z_axis = face_dict[z_axis_key[0]]
-        print(face_z_axis)
-        print(plane.Normal)
 
         if face_z_axis == plane.Normal:
             offset_planes.append(plane)
             continue 
-        offset_vector = face_z_axis * spacing*number
-        print(offset_vector)
-        new_plane = rg.Plane(plane.Origin + offset_vector, plane.XAxis, plane.YAxis)
-        offset_planes.append(new_plane)
-        print(plane)
-        print(new_plane)
+
+        if 'number' not in rebar_dict or 'spacing' not in rebar_dict:
+            number = int(rebar_dict['number'])-1
+            spacing = float(rebar_dict['spacing'])
+            offset_vector = face_z_axis * spacing*number
+            print(offset_vector)
+            new_plane = rg.Plane(plane.Origin + offset_vector, plane.XAxis, plane.YAxis)
+            offset_planes.append(new_plane)
+            print(plane)
+            print(new_plane)
 
     return offset_planes
 
@@ -147,15 +145,25 @@ def create_offset_curves_tree_from_dict_list(plane_list, curves, rebar_dict_list
     for i in range(curves.BranchCount):
         _dict = rebar_dict_list[i]
         branch_path = curves.Path(i)
-        if 'number' not in _dict or 'spacing' not in _dict:
+        number = 1
+        spacing = 0
+        if 'number' in _dict:
+            if _dict['number'] is not None and _dict['number'].strip() != '':
+                number = int(_dict['number'])
+        if 'spacing' in _dict:
+            if _dict['spacing'] is not None and _dict['spacing'].strip() != '':
+                spacing = float(_dict['spacing'])
+     
+        if number < 2 or spacing is 0:
             new_branch_path = branch_path.AppendElement(0)
             for curve in curves.Branch(branch_path):
                 offset_curve_tree.Add(curve, new_branch_path)
             continue
-        number = int(_dict['number'])
-        spacing = float(_dict['spacing'])
-        plane = plane_list[i]
-        for curve in curves.Branch(branch_path):
-            offset_curves  = offset_curve(curve, plane, number, spacing,branch_path)
-            offset_curve_tree.MergeTree(offset_curves)
+        else:
+            number = int(_dict['number'])
+            spacing = float(_dict['spacing'])
+            plane = plane_list[i]
+            for curve in curves.Branch(branch_path):
+                offset_curves  = offset_curve(curve, plane, number, spacing,branch_path)
+                offset_curve_tree.MergeTree(offset_curves)
     return offset_curve_tree

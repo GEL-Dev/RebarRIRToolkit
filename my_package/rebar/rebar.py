@@ -289,10 +289,22 @@ def set_layoutAsNumberWithSpacing(rebar, number, spacing):
     return rebar
 
 def set_rebar_spacing_from_dict(rebar, dict):
+    
     if rebar == None:
         return rebar
-    if 'spacing' not in dict or dict['spacing'] == None or float(dict['spacing']) <= 0:
+    number = 1
+    spacing = 0
+    if 'spacing' not in dict or 'number' not in dict:
         return rebar
+    else:
+        if dict['spacing'] == None or dict['spacing'] == "":
+            return rebar
+        else:
+            spacing = float(dict['spacing'])
+        if dict['number'] == None or dict['number'] == "":
+            return rebar
+        else:
+            number = int(dict['number'])
     bar_counts = int(dict['number']) 
     rebar = set_layoutAsNumberWithSpacing(rebar, bar_counts, float(dict['spacing']))
     return rebar
