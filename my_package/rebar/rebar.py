@@ -306,7 +306,8 @@ def set_rebar_spacing_from_dict(rebar, dict):
         else:
             number = int(dict['number'])
     bar_counts = int(dict['number']) 
-    rebar = set_layoutAsNumberWithSpacing(rebar, bar_counts, float(dict['spacing']))
+    if bar_counts > 1 and spacing > 0:
+        rebar = set_layoutAsNumberWithSpacing(rebar, bar_counts, float(dict['spacing']))
     return rebar
 
 def set_comment(rebar, comment):
