@@ -95,15 +95,33 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
     offset_planes = []
     for i, plane in enumerate(plane_list):
         rebar_dict = rebar_dict_list[i]
+        number =0
+        spacing =0
+
         if 'number' not in rebar_dict or 'spacing' not in rebar_dict:
+            print("number or spcaing is not in rebar dict")
+            offset_planes.append(plane)
+            continue 
+        if  int(rebar_dict['number']) is None or int(rebar_dict['number']) is 0 or int(rebar_dict['number']) is 1:
+            print(int(rebar_dict['number']))
+            offset_planes.append(plane)
+            print("number'value is not in rebar dict")
+            continue 
+        if  int(rebar_dict['spacing']) is None or int(rebar_dict['spacing']) is 0:
+            offset_planes.append(plane)
+            print("spcaing' value is not in rebar dict")
+            continue 
+        if int(rebar_dict["face"]) is None or 'face' not in rebar_dict:
+            print("face value is not valid or no face key")
             offset_planes.append(plane)
             continue 
         face = int(rebar_dict["face"])
+        
         face_dict = next((face_dict for face_dict in face_dict_list if face_dict["i"] == face), None)
+        
         if face_dict is None:
             offset_planes.append(plane)
             continue 
-
         z_axis_key = ["x","y","z"]
         main_axis = str(rebar_dict["main_axis"].replace("_n",""))
         sub_axis = str(rebar_dict["sub_axis"].replace("_n",""))
@@ -111,19 +129,20 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
         z_axis_key.remove(sub_axis)
         face_z_axis = face_dict[z_axis_key[0]]
 
-        if face_z_axis == plane.Normal:
-            offset_planes.append(plane)
-            continue 
+        #if face_z_axis == plane.Normal:
+        #    offset_planes.append(plane)
+        #    print(face_z_axis)
+        #    continue 
 
-        if 'number' not in rebar_dict or 'spacing' not in rebar_dict:
-            number = int(rebar_dict['number'])-1
-            spacing = float(rebar_dict['spacing'])
-            offset_vector = face_z_axis * spacing*number
-            print(offset_vector)
-            new_plane = rg.Plane(plane.Origin + offset_vector, plane.XAxis, plane.YAxis)
-            offset_planes.append(new_plane)
-            print(plane)
-            print(new_plane)
+
+        number = int(rebar_dict['number'])-1
+        spacing = float(rebar_dict['spacing'])
+        offset_vector = face_z_axis * spacing*number
+        print(offset_vector)
+        new_plane = rg.Plane(plane.Origin + offset_vector, plane.XAxis, plane.YAxis)
+        offset_planes.append(new_plane)
+        print(plane)
+        print(new_plane)
 
     return offset_planes
 
