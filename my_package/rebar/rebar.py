@@ -297,11 +297,11 @@ def set_rebar_spacing_from_dict(rebar, dict):
     if 'spacing' not in dict or 'number' not in dict:
         return rebar
     else:
-        if dict['spacing'] == None or dict['spacing'] == "":
+        if dict['spacing'] == None or dict['spacing'] == "" or dict['spacing'] == 0:
             return rebar
         else:
             spacing = float(dict['spacing'])
-        if dict['number'] == None or dict['number'] == "":
+        if dict['number'] == None or dict['number'] == "" or dict['number'] == 0 or dict['number'] == 1:
             return rebar
         else:
             number = int(dict['number'])
