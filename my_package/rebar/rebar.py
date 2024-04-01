@@ -221,8 +221,9 @@ def create_rebar_coupler_from_dict(doc, rebar, dict,coupler_family_name):
     
 def create_rebars_from_curves(curves, norms, types, shapes, pitches, a, b, c, d, e, f, g, comments, bar_numbers):
     rebars = []
-    with Transaction('create_bars') as t:
-        doc = get_active_doc()
+    doc = get_active_doc()
+    with Transaction(doc,'create_bars') as t:
+        
         t.Start()
         failureOptions = t.GetFailureHandlingOptions()
         handler = MyPreProcessor()
@@ -252,6 +253,14 @@ def create_rebar_from_dict_CAS(doc,dict,  plane, host):
     rebar = Rebar.CreateFromCurvesAndShape(doc, rv_shape, rv_type, rv_startHookType, rv_endHookType, host, rv_norm, rv_curves, rv_startHookOrientation, rv_endHookOrientation)
     return rebar
 
+def create_rebar_from_curve_CAS(curves, plane, host, diameter, shapeName):
+    doc = get_active_doc()
+    rv_curves = [convert_rhino_to_revit_geometry(curve) for curve in curves]
+    rv_norm = convert_rhino_to_revit_geometry(plane.Normal)
+    rv_shape = get_rebar_shape_by_name(shapeName)
+    rv_type = get_rebar_type_by_diameter(diameter)
+    rebar = Rebar.CreateFromCurvesAndShape(doc, rv_shape, rv_type, None, None, host, rv_norm, rv_curves, RebarHookOrientation.Right, RebarHookOrientation.Right)
+    return rebar
 
 def create_rebar_from_dict_RS(dict,  plane, host):
     doc = get_active_doc()
