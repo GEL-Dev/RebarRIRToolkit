@@ -129,10 +129,10 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
         z_axis_key.remove(sub_axis)
         face_z_axis = face_dict[z_axis_key[0]]
 
-        #if face_z_axis == plane.Normal:
-        #    offset_planes.append(plane)
-        #    print(face_z_axis)
-        #    continue 
+        if face_z_axis == plane.Normal:
+            offset_planes.append(plane)
+            print(face_z_axis)
+            continue 
 
 
         number = int(rebar_dict['number'])-1
