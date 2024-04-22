@@ -178,7 +178,7 @@ def create_rebarShape_rhinoCurves_from_dict_list(dict_list, plane_list=None):
         curves_list.append(create_rebarShape_rhinoCurve_from_dict(dict, plane_list[i]).curve)
     return th.list_to_tree(curves_list)
 
-def create_rebar_coupler_data(doc, rebar, index, coupler_family_name):
+def create_rebar_coupler_data(doc, rebar, start, end, coupler_family_name):
     coupler_type = get_default_coupler_type(doc, rebar,coupler_family_name)
     if coupler_type != None:
         defaulttypeId = coupler_type.Id
@@ -186,11 +186,11 @@ def create_rebar_coupler_data(doc, rebar, index, coupler_family_name):
         if defaulttypeId != ElementId.InvalidElementId:
             rebarData_start =None
             rebarData_end =None
-            if index == 0:
-                rebarData_start = RebarReinforcementData.Create(rebar.Id, index)
+            if start:
+                rebarData_start = RebarReinforcementData.Create(rebar.Id, 0)
                 print(rebarData_start)
-            elif index == 1:
-                rebarData_end = RebarReinforcementData.Create(rebar.Id, index)
+            if end:
+                rebarData_end = RebarReinforcementData.Create(rebar.Id, 1)
                 print(rebarData_end)
             error = clr.Reference[RebarCouplerError]()
 
@@ -198,26 +198,38 @@ def create_rebar_coupler_data(doc, rebar, index, coupler_family_name):
     return None
 
 
-def create_rebar_coupler_at_index(doc,rebar, index,coupler_family_name):
-    data = create_rebar_coupler_data(doc,rebar, index,coupler_family_name)
+def create_rebar_coupler_at_index(doc,rebar, start, end,coupler_family_name):
+    data = create_rebar_coupler_data(doc,rebar, start, end, coupler_family_name)
     if data == None:
         return rebar
     type_Id, rebarData_start, rebarData_end, error = data
-    return RebarCoupler.Create(doc, type_Id, rebarData_start, rebarData_end, error)
+    print("type_Id" , type_Id)
+    print("rebarData_start" , rebarData_start)
+    print("rebarData_end" , rebarData_end)
+    if type_Id == None:
+        return rebar
+    if rebarData_start == None and rebarData_end == None:
+        return rebar
+    if rebarData_start != None:
+        RebarCoupler.Create(doc, type_Id, rebarData_start, None, error)
+    if rebarData_end != None:
+        RebarCoupler.Create(doc, type_Id, rebarData_end, None, error)
+    return rebar
 
 def create_rebar_coupler_from_dict(doc, rebar, dict,coupler_family_name):
-    index = -1
+    start = False
+    end = False
     if 'coupler_start' in dict:
         if dict['coupler_start'] == 1 or dict['coupler_start'] == "1":
-            index = 0
+            start = True
+            
             
     if 'coupler_end' in dict:
         if dict['coupler_end'] == 1 or dict['coupler_end'] == "1":
-            index = 1
-    if index == -1:
+            end = True
+    if end is False and start is False:
         return rebar
-    print(index)
-    return create_rebar_coupler_at_index(doc,rebar, index,coupler_family_name)
+    return create_rebar_coupler_at_index(doc,rebar, start, end,coupler_family_name)
     
 def create_rebars_from_curves(curves, norms, types, shapes, pitches, a, b, c, d, e, f, g, comments, bar_numbers):
     rebars = []
@@ -346,7 +358,8 @@ def create_rebars_from_dict_CAS(dict_list, plane_list, host,coupler_family_name=
             rebar = set_rebar_spacing_from_dict(rebar, dict)
             rebar = create_rebar_coupler_from_dict(doc, rebar, dict,coupler_family_name)
             rebar = set_comment_from_dict(rebar, dict)
-            rebars.append(rebar.Id)
+            if rebar != None:
+                rebars.append(rebar.Id)
         t.SetFailureHandlingOptions(failureOptions)
         t.Commit()
 
