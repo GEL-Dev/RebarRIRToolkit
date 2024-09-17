@@ -201,12 +201,12 @@ class RebarShapeCurve:
         return [base_line,base_line2,base_line3,base_line4,base_line5,base_line6]
     
     def _generate_u_angled_line(self,a,b,c):
-        fromPt = rg.Point3d(a,-b,0)
+        fromPt = rg.Point3d(a,b,0)
         toPt = rg.Point3d(0,0,0)
         base_line = rg.Line(fromPt,toPt)
         toPt2 = rg.Point3d(c,0,0)
         base_line2 = rg.Line(toPt,toPt2)
-        toPt3 = rg.Point3d(c-a,-b,0)
+        toPt3 = rg.Point3d(c-a,b,0)
         base_line3 = rg.Line(toPt2,toPt3)
         return [base_line,base_line2,base_line3]
 

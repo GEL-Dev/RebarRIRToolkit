@@ -102,16 +102,20 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
             print("number or spcaing is not in rebar dict")
             offset_planes.append(plane)
             continue 
-        if  int(rebar_dict['number']) is None or int(rebar_dict['number']) is 0 or int(rebar_dict['number']) is 1:
+        if  rebar_dict['spacing'].strip() == '' or rebar_dict['number'].strip() == '':
+            print("number or spacing is not an integer")
+            offset_planes.append(plane)
+            continue
+        if  int(rebar_dict['number']) is 0 or int(rebar_dict['number']) is 1:
             print(int(rebar_dict['number']))
             offset_planes.append(plane)
             print("number'value is not in rebar dict")
             continue 
-        if  int(rebar_dict['spacing']) is None or int(rebar_dict['spacing']) is 0:
+        if  int(rebar_dict['spacing']) is 0:
             offset_planes.append(plane)
             print("spcaing' value is not in rebar dict")
             continue 
-        if int(rebar_dict["face"]) is None or 'face' not in rebar_dict:
+        if  rebar_dict["face"] is None or 'face' not in rebar_dict:
             print("face value is not valid or no face key")
             offset_planes.append(plane)
             continue 
@@ -128,21 +132,20 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
         z_axis_key.remove(main_axis)
         z_axis_key.remove(sub_axis)
         face_z_axis = face_dict[z_axis_key[0]]
-
         if face_z_axis == plane.Normal:
             offset_planes.append(plane)
             print(face_z_axis)
-            continue 
-
+            continue
+           
 
         number = int(rebar_dict['number'])-1
         spacing = float(rebar_dict['spacing'])
         offset_vector = face_z_axis * spacing*number
-        print(offset_vector)
+        #print(offset_vector)
         new_plane = rg.Plane(plane.Origin + offset_vector, plane.XAxis, plane.YAxis)
         offset_planes.append(new_plane)
-        print(plane)
-        print(new_plane)
+        #print(plane)
+        #print(new_plane)
 
     return offset_planes
 
@@ -161,6 +164,7 @@ def offset_curve(curve, plane, number, spacing, branch_path):
 
 def create_offset_curves_tree_from_dict_list(plane_list, curves, rebar_dict_list):
     offset_curve_tree = DataTree[System.Object]()
+    print(curves.BranchCount)
     for i in range(curves.BranchCount):
         _dict = rebar_dict_list[i]
         branch_path = curves.Path(i)
