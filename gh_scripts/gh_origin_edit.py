@@ -4,7 +4,7 @@ sub_axis = _rebar_dict["sub_axis"]
 
 for d in _face_dict:
     if face == int(d["i"]):
-        print(d)
+        #print(d)
         origin = d["Pt"]
         main_axis = d["x"]
         y_axis = d["y"]

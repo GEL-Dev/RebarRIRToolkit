@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import clr
 import System
 import ghpythonlib.treehelpers as th
-from rebarShape import RebarShapeCurve
-from data_processor import find_row_by_name
+from .rebarShape import RebarShapeCurve
+from .data_processor import find_row_by_name
 from utils.utils import update_params_from_dict_list, dictionary_from_csv
 from utils.revit_utils import get_active_doc, get_active_ui_doc
 from utils.rhinoinside_utils import convert_rhino_to_revit_geometry, convert_rhino_to_revit_length, convert_revit_to_rhino_length
-from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId,Element,ElementType
-from Autodesk.Revit.DB.Structure import Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, TransactionGroup,BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId,Element,ElementType
+from Autodesk.Revit.DB.Structure import Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation,RebarConstraintsManager
 
 import math
 
@@ -182,16 +181,16 @@ def create_rebar_coupler_data(doc, rebar, start, end, coupler_family_name):
     coupler_type = get_default_coupler_type(doc, rebar,coupler_family_name)
     if coupler_type != None:
         defaulttypeId = coupler_type.Id
-        print(defaulttypeId)
+        #print(defaulttypeId)
         if defaulttypeId != ElementId.InvalidElementId:
             rebarData_start =None
             rebarData_end =None
             if start:
                 rebarData_start = RebarReinforcementData.Create(rebar.Id, 0)
-                print(rebarData_start)
+                #print(rebarData_start)
             if end:
                 rebarData_end = RebarReinforcementData.Create(rebar.Id, 1)
-                print(rebarData_end)
+                #print(rebarData_end)
             error = clr.Reference[RebarCouplerError]()
 
             return defaulttypeId, rebarData_start, rebarData_end, error
@@ -199,13 +198,16 @@ def create_rebar_coupler_data(doc, rebar, start, end, coupler_family_name):
 
 
 def create_rebar_coupler_at_index(doc,rebar, start, end,coupler_family_name):
+    doc = get_active_doc()
+    t = Transaction(doc, 'create coupler')
+    t.Start()
     data = create_rebar_coupler_data(doc,rebar, start, end, coupler_family_name)
     if data == None:
         return rebar
     type_Id, rebarData_start, rebarData_end, error = data
-    print("type_Id" , type_Id)
-    print("rebarData_start" , rebarData_start)
-    print("rebarData_end" , rebarData_end)
+    #print("type_Id" , type_Id)
+    #print("rebarData_start" , rebarData_start)
+    #print("rebarData_end" , rebarData_end)
     if type_Id == None:
         return rebar
     if rebarData_start == None and rebarData_end == None:
@@ -214,6 +216,7 @@ def create_rebar_coupler_at_index(doc,rebar, start, end,coupler_family_name):
         RebarCoupler.Create(doc, type_Id, rebarData_start, None, error)
     if rebarData_end != None:
         RebarCoupler.Create(doc, type_Id, rebarData_end, None, error)
+    t.Commit()
     return rebar
 
 def create_rebar_coupler_from_dict(doc, rebar, dict,coupler_family_name):
@@ -250,7 +253,9 @@ def create_rebars_from_curves(curves, norms, types, shapes, pitches, a, b, c, d,
     return rebars
 
 def create_rebar_from_dict_CAS(doc,dict,  plane, host):
-
+    doc = get_active_doc()
+    t = Transaction(doc, 'create_bars')
+    t.Start()
     shape = create_rebarShape_rhinoCurve_from_dict(dict, plane)
     curves = shape.curve
     norm = shape.plane.Normal
@@ -263,6 +268,7 @@ def create_rebar_from_dict_CAS(doc,dict,  plane, host):
     rv_startHookType = get_hook_type_from_shapename(shape.rv_name)[0]
     rv_endHookType = get_hook_type_from_shapename(shape.rv_name)[1]
     rebar = Rebar.CreateFromCurvesAndShape(doc, rv_shape, rv_type, rv_startHookType, rv_endHookType, host, rv_norm, rv_curves, rv_startHookOrientation, rv_endHookOrientation)
+    t.Commit()
     return rebar
 
 def create_rebar_from_curve_CAS(curves, plane, host, diameter, shapeName):
@@ -310,7 +316,9 @@ def set_layoutAsNumberWithSpacing(rebar, number, spacing):
     return rebar
 
 def set_rebar_spacing_from_dict(rebar, dict):
-    
+    doc = get_active_doc()
+    t = Transaction(doc, 'edit constraints')
+    t.Start()
     if rebar == None:
         return rebar
     number = 1
@@ -329,13 +337,18 @@ def set_rebar_spacing_from_dict(rebar, dict):
     bar_counts = int(dict['number']) 
     if bar_counts > 1 and spacing > 0:
         rebar = set_layoutAsNumberWithSpacing(rebar, bar_counts, float(dict['spacing']))
+    t.Commit()
     return rebar
 
 def set_comment(rebar, comment):
+    doc = get_active_doc()
+    t = Transaction(doc, 'set comment')
+    t.Start()
     if rebar == None:
         return rebar
     comment_param = rebar.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)
     comment_param.Set(comment)
+    t.Commit()
     return rebar
 
 def set_comment_from_dict(rebar, dict):
@@ -346,22 +359,51 @@ def set_comment_from_dict(rebar, dict):
     rebar = set_comment(rebar, dict['name'])
     return rebar
 
+
+
+
 def create_rebars_from_dict_CAS(dict_list, plane_list, host,coupler_family_name="CPLD"):
     doc = get_active_doc()
     rebars = []
-    with Transaction(doc, 'create_bars') as t:
-        t.Start()
-        failureOptions = t.GetFailureHandlingOptions()
-        handler = MyPreProcessor()
+
+    transaction_group = TransactionGroup(doc, "Grouped Transactions")
+    transaction_group.Start()
+    try:
         for i, dict in enumerate(dict_list):
             rebar = create_rebar_from_dict_CAS(doc, dict,  plane_list[i], host)
             rebar = set_rebar_spacing_from_dict(rebar, dict)
             rebar = create_rebar_coupler_from_dict(doc, rebar, dict,coupler_family_name)
             rebar = set_comment_from_dict(rebar, dict)
             if rebar != None:
-                rebars.append(rebar.Id)
-        t.SetFailureHandlingOptions(failureOptions)
-        t.Commit()
+                rebars.append(rebar)
+        transaction_group.Assimilate()
+
+    except Exception as e:
+        # エラーが発生した場合、TransactionGroup全体をロールバック
+        print("Error:", e)
+        transaction_group.RollBack()
+
+  
+    '''
+    t.SetFailureHandlingOptions(failureOptions)
+    t.Commit()
+    t = Transaction(doc, 'edit constraints')
+    t.Start()
+    for rebar in rebars:
+        rebarConstraintsManager = rebar.GetRebarConstraintsManager()
+        rebarConstrainedHandles = rebarConstraintsManager.GetAllConstrainedHandles()
+        rebarConstrains = rebarConstraintsManager.GetRebarConstraints()
+        for rebarConstrain in rebarConstrains:
+            print(rebarConstrain)
+        print(len(rebarConstrainedHandles))
+        for handle in rebarConstrainedHandles:
+            print(handle.GetHandleName())
+            print(handle.GetHandleType())
+            print(handle.IsCustomHandle())
+            rebarConstraintsManager.RemovePreferredConstraintFromHandle(handle)
+    t.Commit()
+    '''
+    
 
     return rebars
 

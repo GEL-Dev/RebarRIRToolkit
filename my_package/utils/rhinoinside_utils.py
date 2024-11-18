@@ -23,7 +23,7 @@ def convert_revit_to_rhino_length(revit_length):
 
 def convert_rhino_to_revit_geometry(rhino_geometry):
     geometry_type = type(rhino_geometry)
-    print(geometry_type)
+    #print(geometry_type)
     if geometry_type is Point3d or \
         geometry_type is Point3f or \
         geometry_type is Vector3d or \
@@ -48,7 +48,7 @@ def convert_rhino_to_revit_geometry(rhino_geometry):
         raise ValueError("Unsupported geometry type: {0}".format(geometry_type))
 def convert_revit_to_rhino_geometry(revit_geometry):
     geometry_type = type(revit_geometry)
-    print(geometry_type)
+    #print(geometry_type)
     if geometry_type is BoundingBoxXYZ:
             return revit_geometry.ToBox()
     elif geometry_type is RevitArc or \

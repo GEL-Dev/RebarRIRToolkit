@@ -1,9 +1,8 @@
+# -*- coding: utf-8 -*-
 import Rhino.Geometry as rg
 import System
-import clr
-clr.AddReference("Grasshopper")
-import Grasshopper
-import Grasshopper.DataTree as DataTree
+import ghpythonlib.treehelpers as th
+import math
 
 
 def create_plane_from_dict(d, plane, normal):
@@ -44,6 +43,12 @@ def create_plane_list_from_dict_list(rebar_dict_list, face_dict_list):
         x_offset = float(rebar_dict["x_offset"])
         y_offset= float(rebar_dict["y_offset"])
         z_offset = float(rebar_dict["z_offset"])
+
+        angle_in_radians = 0
+        if("angle_plane" in rebar_dict and rebar_dict["angle_plane"] is not None and rebar_dict["angle_plane"].strip() != ''):
+            angle_in_radians = math.radians(float(rebar_dict["angle_plane"]))
+      
+
 
         for d in face_dict_list:
 
@@ -87,6 +92,7 @@ def create_plane_list_from_dict_list(rebar_dict_list, face_dict_list):
                     sub_axis_rs = y_axis
             
                 new_plane = rg.Plane(place_origin, main_axis_rs, sub_axis_rs)
+                new_plane.Rotate(angle_in_radians, main_axis_rs)
                 result_planes .append(new_plane)
     return result_planes
 
@@ -96,25 +102,39 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
     for i, plane in enumerate(plane_list):
         rebar_dict = rebar_dict_list[i]
         number =0
-        spacing =0
+        spacing =0.0
 
+         # 必須キーが存在するかの確認
         if 'number' not in rebar_dict or 'spacing' not in rebar_dict:
-            print("number or spcaing is not in rebar dict")
+            print("number or spacing is not in rebar dict")
             offset_planes.append(plane)
             continue 
+        
+        # 数値変換可能かの確認
+        try:
+            number = int(rebar_dict['number'])
+            spacing = float(rebar_dict['spacing'])
+        except ValueError:
+            print("number or spacing is not a valid integer or float")
+            offset_planes.append(plane)
+            continue
+
         if  rebar_dict['spacing'].strip() == '' or rebar_dict['number'].strip() == '':
             print("number or spacing is not an integer")
             offset_planes.append(plane)
             continue
-        if  int(rebar_dict['number']) is 0 or int(rebar_dict['number']) is 1:
-            print(int(rebar_dict['number']))
+
+        # 数値の範囲チェック
+        if number <= 1:
+            print("number value is invalid:", number)
             offset_planes.append(plane)
-            print("number'value is not in rebar dict")
             continue 
-        if  int(rebar_dict['spacing']) is 0:
+        if spacing <= 0:
+            print("spacing value is invalid:", spacing)
             offset_planes.append(plane)
-            print("spcaing' value is not in rebar dict")
             continue 
+
+        
         if  rebar_dict["face"] is None or 'face' not in rebar_dict:
             print("face value is not valid or no face key")
             offset_planes.append(plane)
@@ -134,7 +154,7 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
         face_z_axis = face_dict[z_axis_key[0]]
         if face_z_axis == plane.Normal:
             offset_planes.append(plane)
-            print(face_z_axis)
+            #print(face_z_axis)
             continue
            
 
@@ -150,7 +170,7 @@ def offset_planes_from_dict(plane_list, rebar_dict_list, face_dict_list):
     return offset_planes
 
 def offset_curve(curve, plane, number, spacing, branch_path):
-    offset_curves = DataTree[System.Object]()
+    offset_curves = th.Tree[object]()
     for i in range(number):
         distance = i * spacing
         offset_vector = plane.Normal * distance
@@ -163,8 +183,8 @@ def offset_curve(curve, plane, number, spacing, branch_path):
     return offset_curves
 
 def create_offset_curves_tree_from_dict_list(plane_list, curves, rebar_dict_list):
-    offset_curve_tree = DataTree[System.Object]()
-    print(curves.BranchCount)
+    offset_curve_tree = th.Tree[object]()
+    #print(curves.BranchCount)
     for i in range(curves.BranchCount):
         _dict = rebar_dict_list[i]
         branch_path = curves.Path(i)

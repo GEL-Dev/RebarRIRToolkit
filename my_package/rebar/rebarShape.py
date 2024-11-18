@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import Rhino.Geometry as rg
 #import scriptcontext as sc
 import math
