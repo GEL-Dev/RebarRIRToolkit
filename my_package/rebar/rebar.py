@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
-
+import clr
+clr.AddReference("RhinoInside.Revit")
+clr.AddReference('System.Core')
+clr.AddReference('RevitAPI') 
+clr.AddReference('RevitAPIUI')
 import System
 import ghpythonlib.treehelpers as th
+import Autodesk
+from System.Collections.Generic import List, IList
 from .rebarShape import RebarShapeCurve
 from .data_processor import find_row_by_name
 from utils.utils import update_params_from_dict_list, dictionary_from_csv
 from utils.revit_utils import get_active_doc, get_active_ui_doc
 from utils.rhinoinside_utils import convert_rhino_to_revit_geometry, convert_rhino_to_revit_length, convert_revit_to_rhino_length
-from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, TransactionGroup,BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId,Element,ElementType
-from Autodesk.Revit.DB.Structure import Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation,RebarConstraintsManager
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, TransactionGroup,BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId,Element,ElementType,Curve
+from Autodesk.Revit.DB.Structure import RebarFreeFormValidationResult,Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation,RebarConstraintsManager
 
 import math
 
@@ -382,30 +388,94 @@ def create_rebars_from_dict_CAS(dict_list, plane_list, host,coupler_family_name=
         # エラーが発生した場合、TransactionGroup全体をロールバック
         print("Error:", e)
         transaction_group.RollBack()
-
-  
-    '''
-    t.SetFailureHandlingOptions(failureOptions)
-    t.Commit()
-    t = Transaction(doc, 'edit constraints')
-    t.Start()
-    for rebar in rebars:
-        rebarConstraintsManager = rebar.GetRebarConstraintsManager()
-        rebarConstrainedHandles = rebarConstraintsManager.GetAllConstrainedHandles()
-        rebarConstrains = rebarConstraintsManager.GetRebarConstraints()
-        for rebarConstrain in rebarConstrains:
-            print(rebarConstrain)
-        print(len(rebarConstrainedHandles))
-        for handle in rebarConstrainedHandles:
-            print(handle.GetHandleName())
-            print(handle.GetHandleType())
-            print(handle.IsCustomHandle())
-            rebarConstraintsManager.RemovePreferredConstraintFromHandle(handle)
-    t.Commit()
-    '''
     
 
     return rebars
+
+def create_rebar_from_dict_FreeForm(doc,dict,  plane, host):
+    t = Transaction(doc, 'create_bars')
+    t.Start()
+    shape = create_rebarShape_rhinoCurve_from_dict(dict, plane)
+    curves = shape.curve
+    norm = shape.plane.Normal
+    rv_curves_list = List[IList[Curve]]()
+    space = float(dict['spacing'])
+    number = int(dict['number'])
+    if number <= 1:
+        curve_group = List[Curve]([convert_rhino_to_revit_geometry(curve) for curve in curves])
+        rv_curves_list.Add(curve_group)
+    else:
+        for i in range(number):
+            offset_curves = []
+            for curve in curves:
+                distance = space * i
+                offset_vector = norm * distance
+                nurbs_curve = curve.ToNurbsCurve()
+                transformed_nurbs_curve = nurbs_curve.Duplicate()
+                transformed_nurbs_curve.Translate(offset_vector)
+                offset_curves.append(transformed_nurbs_curve)
+            rv_curves = List[Curve]([convert_rhino_to_revit_geometry(curve) for curve in offset_curves])
+            rv_curves_list.Add(rv_curves)
+    
+  
+    rv_type = get_rebar_type_by_diameter(float(dict['diameter']))
+    rv_startHookOrientation = get_hook_orientation_from_shapename(shape.rv_name)[0]
+    rv_endHookOrientation = get_hook_orientation_from_shapename(shape.rv_name)[1]
+    rv_startHookType = get_hook_type_from_shapename(shape.rv_name)[0]
+    rv_endHookType = get_hook_type_from_shapename(shape.rv_name)[1]
+    error = clr.Reference[RebarFreeFormValidationResult]()
+    rebar = Rebar.CreateFreeForm(doc, rv_type,host,rv_curves_list, error)
+    if error.Value == RebarFreeFormValidationResult.Success:
+        '''
+        
+        workshop_instuctions_param =rebar.get_Parameter(BuiltInParameter.REBAR_WORKSHOP_INSTRUCTIONS)
+        if partition_param and partition is not None:
+            # Number Suffixを設定
+            partition_param.Set(partition)
+            print(f"Updated Rebar Number Suffix for Rebar ID: {rebar.Id}")
+        if workshop_instuctions_param :
+            workshop_instuctions_param.Set(0)
+        #rebar.set_hook_orientation(0, rv_startHookOrientation)
+        #rebar.set_hook_orientation(1, rv_endHookOrientation)
+        #rebar.set_hook_type(0, rv_startHookType)
+        #rebar.set_hook_type(1, rv_endHookType)
+        '''
+        workshop_instuctions_param =rebar.get_Parameter(BuiltInParameter.REBAR_WORKSHOP_INSTRUCTIONS)
+        if workshop_instuctions_param :
+            workshop_instuctions_param.Set(0)
+        t.Commit()
+        return rebar
+    else:
+
+        print("Failed to create rebar:", error.Value)
+        t.RollBack()
+        return None
+    return None
+
+    
+   
+
+def create_rebars_from_dict_FreeForm(dict_list, plane_list, host,coupler_family_name="CPLD"):
+    doc = get_active_doc()
+    transaction_group = TransactionGroup(doc, "Grouped Transactions")
+    transaction_group.Start()
+    rebars = []
+    try:
+        for i, dict in enumerate(dict_list):
+            rebar = create_rebar_from_dict_FreeForm(doc, dict,  plane_list[i], host)
+            rebar = create_rebar_coupler_from_dict(doc, rebar, dict,coupler_family_name)
+            rebar = set_comment_from_dict(rebar, dict)
+            if rebar != None:
+                rebars.append(rebar)
+        transaction_group.Assimilate()
+        print("Success")
+
+    except Exception as e:
+        # エラーが発生した場合、TransactionGroup全体をロールバック
+        print("Error:", e)
+        transaction_group.RollBack()
+   
+    pass
 
 
     
