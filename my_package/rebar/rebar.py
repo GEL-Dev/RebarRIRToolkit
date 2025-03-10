@@ -14,7 +14,7 @@ from utils.utils import update_params_from_dict_list, dictionary_from_csv
 from utils.revit_utils import get_active_doc, get_active_ui_doc
 from utils.rhinoinside_utils import convert_rhino_to_revit_geometry, convert_rhino_to_revit_length, convert_revit_to_rhino_length
 from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory,Transaction, TransactionGroup,BuiltInParameter, IFailuresPreprocessor, FailureProcessingResult, BuiltInFailures, ElementId,Element,ElementType,Curve
-from Autodesk.Revit.DB.Structure import RebarFreeFormValidationResult,Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation,RebarConstraintsManager
+from Autodesk.Revit.DB.Structure import RebarStyle, RebarFreeFormValidationResult,Rebar, RebarBarType, RebarShape, RebarHookType,RebarReinforcementData, RebarCoupler,RebarCouplerError,RebarHookOrientation,RebarConstraintsManager
 
 import math
 
@@ -67,6 +67,7 @@ def get_rebar_shape_by_name(name):
 def get_rebar_style_by_name(name):
     rebar_shape = get_rebar_shape_by_name(name)
     if rebar_shape != None:
+        print(rebar_shape.RebarStyle)
         return rebar_shape.RebarStyle
 
 def get_hook_type_by_angle(angle, style):
@@ -84,7 +85,7 @@ def get_hook_type_from_shapename(shapename):
     start_hook_type =get_hook_type_by_angle(float(data[0]['Hook At Start'] )* math.pi/180, style) 
     end_hook_type =  get_hook_type_by_angle(float(data[0]['Hook At End']) * math.pi/180, style) 
 
-    return [start_hook_type, end_hook_type]
+    return [start_hook_type, end_hook_type,style]
 
 def get_default_coupler_type(doc, rebar, coupler_family_name):
     
@@ -423,6 +424,7 @@ def create_rebar_from_dict_FreeForm(doc,dict,  plane, host):
     rv_endHookOrientation = get_hook_orientation_from_shapename(shape.rv_name)[1]
     rv_startHookType = get_hook_type_from_shapename(shape.rv_name)[0]
     rv_endHookType = get_hook_type_from_shapename(shape.rv_name)[1]
+    style = get_hook_type_from_shapename(shape.rv_name)[2]
     error = clr.Reference[RebarFreeFormValidationResult]()
     rebar = Rebar.CreateFreeForm(doc, rv_type,host,rv_curves_list, error)
     if error.Value == RebarFreeFormValidationResult.Success:
@@ -443,17 +445,38 @@ def create_rebar_from_dict_FreeForm(doc,dict,  plane, host):
         workshop_instuctions_param =rebar.get_Parameter(BuiltInParameter.REBAR_WORKSHOP_INSTRUCTIONS)
         if workshop_instuctions_param :
             workshop_instuctions_param.Set(0)
-        t.Commit()
-        return rebar
-    else:
+        
+        if rebar != None:
+            
+            #rebar.get_Parameter(BuiltInParameter.REBAR_ELEM_HOOK_STYLE).Set(int(RebarStyle.StirrupTie))
+            rebar.get_Parameter(BuiltInParameter.REBAR_ELEM_HOOK_STYLE).Set(int(style))
+            #rebar.get_Parameter(BuiltInParameter.REBAR_SHAPE).Set(rv_shape.Id)
+  
+            try:
+                rebar.SetHookOrientation(0, rv_startHookOrientation)
+                rebar.SetHookOrientation(1, rv_endHookOrientation)
+                
+                if(rebar.CanUseHookType(rv_startHookType.Id)):
+                    rebar.SetHookTypeId(0, rv_startHookType.Id)
+                    print("Set Hook Type" , rv_startHookType.Id)
+                if(rebar.CanUseHookType(rv_endHookType.Id)):
+                    rebar.SetHookTypeId(1, rv_endHookType.Id)
+                
 
+                t.Commit()
+                return rebar
+            except Exception as e:
+                print("Error:", e)
+                t.RollBack()
+                return None
+    else:
         print("Failed to create rebar:", error.Value)
         t.RollBack()
         return None
     return None
 
     
-   
+
 
 def create_rebars_from_dict_FreeForm(dict_list, plane_list, host,coupler_family_name="CPLD"):
     doc = get_active_doc()
