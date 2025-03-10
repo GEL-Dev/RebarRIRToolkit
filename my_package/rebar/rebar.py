@@ -450,7 +450,7 @@ def create_rebar_from_dict_FreeForm(doc,dict,  plane, host):
             
             #rebar.get_Parameter(BuiltInParameter.REBAR_ELEM_HOOK_STYLE).Set(int(RebarStyle.StirrupTie))
             rebar.get_Parameter(BuiltInParameter.REBAR_ELEM_HOOK_STYLE).Set(int(style))
-            #rebar.get_Parameter(BuiltInParameter.REBAR_SHAPE).Set(rv_shape.Id)
+
   
             try:
                 rebar.SetHookOrientation(0, rv_startHookOrientation)
