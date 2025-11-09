@@ -45,9 +45,24 @@ class RebarShapeCurve:
         base_line3 = rg.Line(toPt2,toPt3)
         return [base_line,base_line2,base_line3]
     
-    def _generate_circle_line(self,radius,anele):
-        circle = arc = rg.Arc(rg.Point3d(0,0,0),radius,math.radians(anele))
-        return [circle]
+    def _generate_circle_line(self,a,c):
+        radius = a
+        angle = c / radius
+
+        center = rg.Point3d(0,0,0)
+        plane = rg.Plane.WorldXY
+        plane.Origin = center
+        arc1 = rg.Arc(plane,radius,math.pi)
+        arc2 = rg.Arc(plane, radius, angle)
+        arc3 = rg.Arc(plane,radius,math.pi)
+
+        rotation_axis = rg.Vector3d.ZAxis 
+        arc2.Transform(rg.Transform.Rotation(math.pi, rotation_axis, center))
+        arc3.Transform(rg.Transform.Rotation(math.pi+angle, rotation_axis, center))
+
+        circle = [arc1,arc2,arc3]
+        
+        return circle
     
     def _generate_rect_line(self,a,b,c,d):
         fromPt = rg.Point3d(0,0,0)
@@ -171,8 +186,13 @@ class RebarShapeCurve:
         base_line5 = rg.Line(toPt4,toPt5)
         return [base_line,base_line2,base_line3,base_line4,base_line5]
     
-    def _generate_arc_curve(self,rad,angle):
-        arc = rg.Arc(rg.Point3d(0,0,0),rad,math.radians(angle))
+    def _generate_arc_curve(self,a,b):
+        radius = b
+        angle = a / radius
+        center = rg.Point3d(0,0,0)
+        plane = rg.Plane.WorldXY
+        plane.Origin = center
+        arc = rg.Arc(plane,radius,angle)
         return [arc]
         
     def _generate_l_angled_line(self,a,b,x):
@@ -229,7 +249,7 @@ class RebarShapeCurve:
         elif self.rh_name=="rg06":
             base_line = self._generate_u_line(self.a,self.b,self.c)
         elif self.rh_name=="rg07":
-            base_line = self._generate_circle_line(self.radius,self.arc_angle)
+            base_line = self._generate_circle_line(self.a,self.c)
         elif self.rh_name=="rg08":
             base_line = self._generate_rect_line(self.a,self.b,self.c,self.d)
         elif self.rh_name=="rg09":
@@ -239,7 +259,7 @@ class RebarShapeCurve:
         elif self.rh_name=="rg11":
             base_line = self._generate_s_line(self.a,self.b,self.c,self.d)
         elif self.rh_name=="rg12":
-            base_line = self._generate_arc_curve(self.radius,self.arc_angle)
+            base_line = self._generate_wrapped_rect_line(self.a,self.b,self.c,self.d,self.e,self.f)
         elif self.rh_name=="rg13":
             base_line = self._generate_u_plus_line(self.a,self.b,self.c,self.d,self.e,self.f,self.g)
         elif self.rh_name=="rg14":
@@ -249,7 +269,7 @@ class RebarShapeCurve:
         elif self.rh_name=="rg16":
             base_line = self._generate_s_plus_line(self.a,self.b,self.c,self.d,self.e,self.x)
         elif self.rh_name=="rg17":
-            base_line = self._generate_wrapped_rect_line(self.a,self.b,self.c,self.d,self.e,self.f)
+            base_line = self._generate_arc_curve(self.a,self.b)
         elif self.rh_name=="rg18":
             base_line = self._generate_c_plus_line(self.a,self.b,self.c,self.x)
         elif self.rh_name=="rg19":
